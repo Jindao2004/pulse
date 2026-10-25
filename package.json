@@ -1,0 +1,109 @@
+{
+  "name": "pulse-monitor",
+  "version": "2.0.14",
+  "description": "Pulse — a desktop Windows performance monitor with selectable CPU/GPU sensors",
+  "main": "main.js",
+  "author": "Jindao",
+  "license": "MIT",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Jindao2004/pulse.git"
+  },
+  "homepage": "https://github.com/Jindao2004/pulse",
+  "type": "commonjs",
+  "scripts": {
+    "start": "electron .",
+    "screenshot": "electron . --screenshot=preview.png",
+    "pack": "electron-builder --win nsis",
+    "pack:portable": "electron-builder --win portable",
+    "pack:all": "electron-builder --win portable nsis",
+    "dist": "electron-builder --win nsis"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.11",
+    "node-hid": "^3.4.0",
+    "systeminformation": "^5.33.16"
+  },
+  "devDependencies": {
+    "electron": "^45.0.0",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "com.pulse.monitor",
+    "productName": "Pulse",
+    "copyright": "Copyright © 2026 Jindao",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "lib/**/*",
+      "src/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "vendor/lhm-net48",
+        "to": "lhm"
+      },
+      {
+        "from": "vendor/sensor-helper.ps1",
+        "to": "sensor-helper.ps1"
+      },
+      {
+        "from": "vendor/sensor-setup.ps1",
+        "to": "sensor-setup.ps1"
+      },
+      {
+        "from": "vendor/game-helper.ps1",
+        "to": "game-helper.ps1"
+      },
+      {
+        "from": "vendor/game-setup.ps1",
+        "to": "game-setup.ps1"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.ico",
+      "artifactName": "Pulse-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "Pulse-${version}.exe",
+      "requestExecutionLevel": "user"
+    },
+    "nsis": {
+      "artifactName": "Pulse-Setup-${version}.${ext}",
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Pulse",
+      "deleteAppDataOnUninstall": false,
+      "runAfterFinish": true
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Jindao2004",
+        "repo": "pulse",
+        "releaseType": "release"
+      }
+    ],
+    "compression": "normal",
+    "asar": true,
+    "npmRebuild": false
+  }
+}

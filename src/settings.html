@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; script-src 'self';"
+    />
+    <meta name="color-scheme" content="dark" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pulse 设置</title>
+    <link rel="stylesheet" href="./settings.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark"></span>
+        <div>
+          <h1>Pulse 设置</h1>
+          <p>桌面监控组件 · 传感器与位置</p>
+        </div>
+      </div>
+      <span class="version" id="version">v--</span>
+    </header>
+
+    <main class="content">
+      <section class="card sensor-card">
+        <div class="card-head">
+          <div>
+            <h2>硬件传感器</h2>
+            <p class="hint">CPU 风扇、温度、频率、功耗通过后台传感器助手读取。</p>
+          </div>
+          <span class="status-pill" id="sensor-status">检查中</span>
+        </div>
+        <div class="sensor-actions">
+          <button class="btn primary" id="enable-sensors" type="button">启用硬件传感器（管理员）</button>
+          <button class="btn" id="refresh-sensors" type="button">刷新数据</button>
+          <span class="sensor-meta" id="sensor-meta"></span>
+        </div>
+        <p class="message" id="sensor-message"></p>
+        <p class="fineprint">
+          首次启用会弹出一次 Windows UAC，并创建一个登录时自动运行的后台任务。助手只读取硬件传感器，不修改 BIOS、风扇或电压设置。
+        </p>
+      </section>
+
+      <section class="card game-library-card">
+        <div class="card-head">
+          <div>
+            <h2>游戏列表</h2>
+            <p class="hint">自动识别、手动添加和 Steam 库导入的游戏都会显示在这里，图标取自游戏 exe。</p>
+          </div>
+          <div class="game-library-actions">
+            <button class="btn small" id="game-import-steam" type="button">导入 Steam</button>
+            <button class="btn small" id="game-add" type="button">添加游戏</button>
+          </div>
+        </div>
+        <div class="game-games" id="game-games"></div>
+        <p class="game-library-empty" id="game-library-empty">点击“导入 Steam”或“添加游戏”加入游戏；加入后启动进程才会自动加速。</p>
+        <p class="message" id="game-library-message"></p>
+      </section>
+
+      <section class="card game-card">
+        <div class="card-head">
+          <div>
+            <h2>游戏加速</h2>
+            <p class="hint">检测到游戏列表中的进程后自动应用；视频/浏览器全屏不会触发。勾选项会即时保存。</p>
+          </div>
+          <span class="status-pill" id="game-status">未安装</span>
+        </div>
+        <div class="game-toolbar">
+          <label class="check-row">
+            <input id="game-enabled" type="checkbox" />
+            <span>启用自动加速</span>
+          </label>
+          <label class="check-row">
+            <input id="game-auto-detect" type="checkbox" />
+            <span>自动识别游戏列表</span>
+          </label>
+          <button class="btn primary" id="game-install" type="button">安装加速服务（管理员）</button>
+          <button class="btn" id="game-toggle" type="button">立即加速</button>
+        </div>
+        <div class="game-summary">
+          <span>已启用 <b id="game-count">0</b> / 11 项</span>
+          <span id="game-current">等待游戏启动</span>
+        </div>
+        <div class="game-section-title">加速启动项</div>
+        <div class="game-grid" id="game-grid">
+          <label class="game-tweak">
+            <input type="checkbox" data-tweak="preventSleep" />
+            <span class="game-tick"></span>
+            <span>禁用 CPU 睡眠模式</span>
+          </label>
+          <label class="game-tweak">
+            <input type="checkbox" data-tweak="highPerformance" />
+            <span class="game-tick"></span>
+            <span>启用游戏电源方案</span>
+          </label>
+          <label class="game-tweak">
+            <input type="checkbox" data-tweak="clearClipboard" />
+            <span class="game-tick"></span>
+            <span>清除剪贴板</span>
+          </label>
+          <label class="game-tweak">
+            <input type="checkbox" data-tweak="trimMemory" />
+            <span class="game-tick"></span>
+            <span>清理 RAM</span>
+          </label>
+          <label class="game-tweak">
+            <input type="checkbox" data-tweak="stickyKeys" />
+            <span class="game-tick"></span>
+            <span>粘滞键</span>
+          </label>
+          <label class="game-tweak">
+            <input type="checkbox" data-tweak="cortana" />
+            <span class="game-tick"></span>
+            <span>禁用 Cortana</span>
+          </label>
+          <label class="game-tweak">
+            <input type="checkbox" data-tweak="backgroundApps" />
+            <span class="game-tick"></span>
+            <span>禁用后台应用</span>
+          </label>
+          <label class="game-tweak">
+            <input type="checkbox" data-tweak="telemetry" />
+            <span class="game-tick"></span>
+            <span>禁用远程数据采集</span>
+          </label>
+          <label class="game-tweak">
+            <input type="checkbox" data-tweak="errorReporting" />
+            <span class="game-tick"></span>
+            <span>禁用问题报告</span>
+          </label>
+          <label class="game-tweak" title="游戏期间屏蔽 Windows 键，退出后恢复">
+            <input type="checkbox" data-tweak="windowsKey" />
+            <span class="game-tick"></span>
+            <span>Windows 键</span>
+          </label>
+          <label class="game-tweak" title="隐藏桌面图标和任务栏，并最小化其他窗口；退出后恢复">
+            <input type="checkbox" data-tweak="gameDesktop" />
+            <span class="game-tick"></span>
+            <span>在游戏桌面上启动游戏</span>
+          </label>
+        </div>
+        <p class="fineprint">
+          电源方案、服务、粘滞键、Windows 键和游戏桌面会在游戏退出后恢复；后台应用会被暂停，退出后恢复。
+        </p>
+        <p class="message" id="game-message"></p>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <div>
+            <h2>CPU 显示</h2>
+            <p class="hint">选择每个指标使用哪个传感器。留空为自动推荐。</p>
+          </div>
+          <span class="chip">CPU</span>
+        </div>
+        <div class="sensor-grid">
+          <label class="field">
+            <span>风扇转速</span>
+            <select id="cpu-fan" data-group="cpu" data-metric="fan"></select>
+            <small data-current="cpu.fan">--</small>
+          </label>
+          <label class="field">
+            <span>温度</span>
+            <select id="cpu-temperature" data-group="cpu" data-metric="temperature"></select>
+            <small data-current="cpu.temperature">--</small>
+          </label>
+          <label class="field">
+            <span>频率</span>
+            <select id="cpu-frequency" data-group="cpu" data-metric="frequency"></select>
+            <small data-current="cpu.frequency">--</small>
+          </label>
+          <label class="field">
+            <span>功耗</span>
+            <select id="cpu-power" data-group="cpu" data-metric="power"></select>
+            <small data-current="cpu.power">--</small>
+          </label>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <div>
+            <h2>GPU 显示</h2>
+            <p class="hint">GPU 传感器默认来自 NVIDIA 驱动；安装助手后可选择更多温度、功耗来源。</p>
+          </div>
+          <span class="chip amber">GPU</span>
+        </div>
+        <div class="sensor-grid">
+          <label class="field">
+            <span>风扇转速</span>
+            <select id="gpu-fan" data-group="gpu" data-metric="fan"></select>
+            <small data-current="gpu.fan">--</small>
+          </label>
+          <label class="field">
+            <span>温度</span>
+            <select id="gpu-temperature" data-group="gpu" data-metric="temperature"></select>
+            <small data-current="gpu.temperature">--</small>
+          </label>
+          <label class="field">
+            <span>频率</span>
+            <select id="gpu-frequency" data-group="gpu" data-metric="frequency"></select>
+            <small data-current="gpu.frequency">--</small>
+          </label>
+          <label class="field">
+            <span>功耗</span>
+            <select id="gpu-power" data-group="gpu" data-metric="power"></select>
+            <small data-current="gpu.power">--</small>
+          </label>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <div>
+            <h2>桌面位置</h2>
+            <p class="hint">组件固定在桌面，不置顶，也不能用鼠标拖动。位置从这里选择。</p>
+          </div>
+        </div>
+        <div class="position-layout">
+          <div class="position-grid" id="position-grid"></div>
+          <div class="position-fields">
+            <label class="field compact">
+              <span>显示器</span>
+              <select id="display-select"></select>
+            </label>
+            <label class="field compact">
+              <span>边距（像素）</span>
+              <input id="margin-input" type="number" min="0" max="200" step="4" value="0" />
+            </label>
+            <label class="check-row">
+              <input id="autostart-input" type="checkbox" />
+              <span>开机自动启动 Pulse</span>
+            </label>
+            <label class="field compact">
+              <span>刷新频率</span>
+              <select id="refresh-select">
+                <option value="1000">每秒</option>
+                <option value="2000">每 2 秒</option>
+                <option value="5000">每 5 秒</option>
+              </select>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <section class="card update-card">
+        <div class="card-head">
+          <div>
+            <h2>软件更新</h2>
+            <p class="hint" id="update-status">正在读取版本…</p>
+          </div>
+          <button class="btn small" id="update-action" type="button">检查更新</button>
+        </div>
+        <div class="update-progress" id="update-progress" hidden>
+          <div class="update-progress-track"><span id="update-progress-fill"></span></div>
+        </div>
+        <p class="hint" id="update-hint">从 GitHub Releases 检查新版本，下载完成后可重启安装。</p>
+      </section>
+    </main>
+
+    <footer class="bottombar">
+      <span class="save-note" id="save-note">所有设置保存在 %APPDATA%\Pulse\config.json</span>
+      <div class="footer-buttons">
+        <button class="btn" id="cancel-btn" type="button">取消</button>
+        <button class="btn primary" id="save-btn" type="button">保存设置</button>
+      </div>
+    </footer>
+
+    <script src="./theme.js"></script>
+    <script src="./settings.js"></script>
+  </body>
+</html>

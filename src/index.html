@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; script-src 'self';"
+    />
+    <meta name="color-scheme" content="dark" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pulse</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="stage">
+      <main class="widget" id="widget" aria-label="Pulse 系统性能监控">
+        <div class="ambient ambient-a"></div>
+        <div class="ambient ambient-b"></div>
+        <div class="sheen"></div>
+
+        <div class="content">
+          <section class="section cpu-section" aria-labelledby="cpu-title">
+            <header class="section-head cpu-head">
+              <div class="title">
+                <span class="title-icon icon-cpu">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <rect x="7" y="7" width="10" height="10" rx="2.2" />
+                    <rect x="10.2" y="10.2" width="3.6" height="3.6" rx="0.9" class="soft" />
+                    <path d="M9 3.2v1.9M12 3.2v1.9M15 3.2v1.9M9 18.9v1.9M12 18.9v1.9M15 18.9v1.9M3.2 9h1.9M3.2 12h1.9M3.2 15h1.9M18.9 9h1.9M18.9 12h1.9M18.9 15h1.9" />
+                  </svg>
+                </span>
+                <span class="title-text" id="cpu-title">CPU</span>
+              </div>
+              <div class="cpu-detail">
+                <span class="cpu-name" id="cpu-name">CPU</span>
+                <span class="cpu-cores" id="cpu-meta">
+                  <span id="cpu-meta-text">-- 核 / -- 线程</span>
+                </span>
+              </div>
+            </header>
+
+            <div class="overview">
+              <div class="ring" id="cpu-ring">
+                <svg class="ring-svg" viewBox="0 0 120 120" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="cpu-gradient" x1="16" y1="105" x2="105" y2="18" gradientUnits="userSpaceOnUse">
+                      <stop class="cpu-stop-in" offset="0" stop-color="#087fdc" />
+                      <stop class="cpu-stop-mid" offset="0.58" stop-color="#149df6" />
+                      <stop class="cpu-stop-out" offset="1" stop-color="#58c8ff" />
+                    </linearGradient>
+                  </defs>
+                  <circle class="ring-shadow" cx="60" cy="60" r="51.5" />
+                  <circle class="ring-track" cx="60" cy="60" r="51.5" />
+                  <circle class="ring-progress cpu-progress" id="cpu-ring-progress" cx="60" cy="60" r="51.5" />
+                </svg>
+                <div class="ring-center">
+                  <span class="ring-number" id="cpu-usage">--</span><span class="ring-unit">%</span>
+                </div>
+              </div>
+
+              <div class="metrics">
+                <div class="metric" id="cpu-fan-metric">
+                  <div class="bar"><i id="cpu-fan-bar" class="fill cpu-fill"></i></div>
+                  <div class="metric-line">
+                    <span class="metric-label">风扇</span>
+                    <span class="metric-value"><b id="cpu-fan">--</b><em>RPM</em></span>
+                  </div>
+                </div>
+
+                <div class="metric" id="cpu-temp-metric">
+                  <div class="bar"><i id="cpu-temp-bar" class="fill cpu-fill"></i></div>
+                  <div class="metric-line">
+                    <span class="metric-label">温度</span>
+                    <span class="metric-value"><b id="cpu-temp">--</b><em>°C</em></span>
+                  </div>
+                </div>
+
+                <div class="metric" id="cpu-freq-metric">
+                  <div class="bar"><i id="cpu-freq-bar" class="fill cpu-fill"></i></div>
+                  <div class="metric-line">
+                    <span class="metric-label">频率</span>
+                    <span class="metric-value"><b id="cpu-freq">--</b><em>MHz</em></span>
+                  </div>
+                </div>
+
+                <div class="metric" id="cpu-power-metric">
+                  <div class="bar"><i id="cpu-power-bar" class="fill cpu-fill"></i></div>
+                  <div class="metric-line">
+                    <span class="metric-label">功耗</span>
+                    <span class="metric-value"><b id="cpu-power">--</b><em>W</em></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <div class="sep"></div>
+
+          <section class="section gpu-section" aria-labelledby="gpu-title">
+            <header class="section-head">
+              <div class="title">
+                <span class="title-icon icon-gpu">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <rect x="2.6" y="6.2" width="18.8" height="11.6" rx="2.6" />
+                    <circle cx="8.2" cy="12" r="2.35" />
+                    <circle cx="15.8" cy="12" r="2.35" />
+                    <path d="M4.8 17.8v2M19.2 17.8v2M7.2 6.2V4.1M12 6.2V4.1M16.8 6.2V4.1" />
+                  </svg>
+                </span>
+                <span class="title-text" id="gpu-title">GPU</span>
+              </div>
+              <div class="meta" id="gpu-meta">
+                <span id="gpu-meta-text">--</span>
+              </div>
+            </header>
+
+            <div class="overview">
+              <div class="ring" id="gpu-ring">
+                <svg class="ring-svg" viewBox="0 0 120 120" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="gpu-gradient" x1="16" y1="105" x2="105" y2="18" gradientUnits="userSpaceOnUse">
+                      <stop offset="0" stop-color="#f59b06" />
+                      <stop offset="0.58" stop-color="#ffb51b" />
+                      <stop offset="1" stop-color="#ffd05b" />
+                    </linearGradient>
+                  </defs>
+                  <circle class="ring-shadow" cx="60" cy="60" r="51.5" />
+                  <circle class="ring-track" cx="60" cy="60" r="51.5" />
+                  <circle class="ring-progress gpu-progress" id="gpu-ring-progress" cx="60" cy="60" r="51.5" />
+                </svg>
+                <div class="ring-center">
+                  <span class="ring-number" id="gpu-usage">--</span><span class="ring-unit">%</span>
+                </div>
+              </div>
+
+              <div class="metrics">
+                <div class="metric" id="gpu-fan-metric">
+                  <div class="bar"><i id="gpu-fan-bar" class="fill gpu-fill"></i></div>
+                  <div class="metric-line">
+                    <span class="metric-label">风扇</span>
+                    <span class="metric-value"><b id="gpu-fan">--</b><em>RPM</em></span>
+                  </div>
+                </div>
+
+                <div class="metric" id="gpu-temp-metric">
+                  <div class="bar"><i id="gpu-temp-bar" class="fill gpu-fill"></i></div>
+                  <div class="metric-line">
+                    <span class="metric-label">温度</span>
+                    <span class="metric-value"><b id="gpu-temp">--</b><em>°C</em></span>
+                  </div>
+                </div>
+
+                <div class="metric" id="gpu-freq-metric">
+                  <div class="bar"><i id="gpu-freq-bar" class="fill gpu-fill"></i></div>
+                  <div class="metric-line">
+                    <span class="metric-label">频率</span>
+                    <span class="metric-value"><b id="gpu-freq">--</b><em>MHz</em></span>
+                  </div>
+                </div>
+
+                <div class="metric" id="gpu-power-metric">
+                  <div class="bar"><i id="gpu-power-bar" class="fill gpu-fill"></i></div>
+                  <div class="metric-line">
+                    <span class="metric-label">功耗</span>
+                    <span class="metric-value"><b id="gpu-power">--</b><em>W</em></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <div class="sep"></div>
+
+          <section class="section stats" aria-label="内存与显存">
+            <div class="stat-row">
+              <div class="stat-name">
+                <span class="mini-icon icon-memory">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <rect x="3" y="7" width="18" height="10" rx="2" />
+                    <path d="M7 10v4M10.3 10v4M13.6 10v4M17 10v4M6 17v2.2M10 17v2.2M14 17v2.2M18 17v2.2" />
+                  </svg>
+                </span>
+                <span>内存</span>
+              </div>
+              <div class="stat-body">
+                <div class="bar stat-bar"><i id="mem-bar" class="fill cpu-fill"></i></div>
+                <div class="stat-values">
+                  <span class="percent" id="mem-percent">--%</span>
+                  <span class="capacity"><b id="mem-used">--</b><span id="mem-total"> / --</span></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="stat-row">
+              <div class="stat-name">
+                <span class="mini-icon icon-vram">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <rect x="3" y="5" width="8" height="6.4" rx="1.5" />
+                    <rect x="13" y="5" width="8" height="6.4" rx="1.5" />
+                    <rect x="3" y="13.6" width="8" height="5.4" rx="1.5" />
+                    <rect x="13" y="13.6" width="8" height="5.4" rx="1.5" />
+                  </svg>
+                </span>
+                <span>显存</span>
+              </div>
+              <div class="stat-body">
+                <div class="bar stat-bar"><i id="vram-bar" class="fill gpu-fill"></i></div>
+                <div class="stat-values">
+                  <span class="percent" id="vram-percent">--%</span>
+                  <span class="capacity"><b id="vram-used">--</b><span id="vram-total"> / --</span></span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <div class="sep"></div>
+
+          <section class="section network-row" aria-label="网络吞吐">
+            <div class="stat-name">
+              <span class="mini-icon icon-network">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M2.9 9.1a13.6 13.6 0 0 1 18.2 0" />
+                  <path d="M5.8 12.1a9.2 9.2 0 0 1 12.4 0" />
+                  <path d="M8.7 15a4.9 4.9 0 0 1 6.6 0" />
+                  <circle cx="12" cy="18.2" r="1.25" class="solid" />
+                </svg>
+              </span>
+              <span>网络</span>
+            </div>
+
+            <div class="network-values">
+              <span class="net-item download">
+                <b id="net-down">0</b><em id="net-down-unit">B/s</em><span class="arrow">↓</span>
+              </span>
+              <span class="net-divider"></span>
+              <span class="net-item upload">
+                <b id="net-up">0</b><em id="net-up-unit">B/s</em><span class="arrow">↑</span>
+              </span>
+            </div>
+          </section>
+
+          <div class="sep"></div>
+
+          <section class="section razer-section" aria-labelledby="peripheral-title">
+            <header class="razer-head">
+              <div class="title razer-title">
+                <span class="title-icon icon-peripheral">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <rect x="3.2" y="9.6" width="9.2" height="7.2" rx="2.2" />
+                    <path d="M6.5 9.6V7.2a2.1 2.1 0 0 1 2.1-2.1h1.2M15.4 9.7a6.4 6.4 0 0 1 0 7.8M18.9 7.1a10 10 0 0 1 0 13" />
+                  </svg>
+                </span>
+                <span class="razer-heading" id="peripheral-title">外设</span>
+              </div>
+              <div class="razer-count" id="peripheral-count">--</div>
+            </header>
+            <div class="razer-list" id="peripheral-list">
+              <div class="razer-empty" id="peripheral-empty">正在检测无线外设…</div>
+            </div>
+          </section>
+
+          <footer class="footer">
+            <div class="brand">
+              <span class="live-dot"></span>
+              <span class="brand-text">PULSE</span>
+              <span class="footer-sep">/</span>
+              <span class="interval" id="interval">1s</span>
+            </div>
+            <div class="footer-actions no-drag">
+              <button class="icon-btn" id="settings-btn" type="button" title="设置" aria-label="打开设置">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 7h8M16 7h4M4 17h2M10 17h10" />
+                  <circle cx="14" cy="7" r="2" />
+                  <circle cx="8" cy="17" r="2" />
+                </svg>
+              </button>
+              <button class="icon-btn" id="menu-btn" type="button" title="菜单" aria-label="打开菜单">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="5" cy="12" r="1.25" class="solid" />
+                  <circle cx="12" cy="12" r="1.25" class="solid" />
+                  <circle cx="19" cy="12" r="1.25" class="solid" />
+                </svg>
+              </button>
+              <button class="icon-btn close-btn" id="close-btn" type="button" title="隐藏到托盘" aria-label="隐藏到托盘">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="m7.2 7.2 9.6 9.6M16.8 7.2l-9.6 9.6" />
+                </svg>
+              </button>
+            </div>
+          </footer>
+        </div>
+      </main>
+    </div>
+
+    <script src="./theme.js"></script>
+    <script src="./renderer.js"></script>
+  </body>
+</html>
