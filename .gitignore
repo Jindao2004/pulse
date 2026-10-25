@@ -3,6 +3,8 @@ release/
 *.log
 pulse-installed-*.txt
 settings-*.png
+toast-*.png
+update-*.png
 upload-source.js
 .DS_Store
 Thumbs.db

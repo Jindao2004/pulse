@@ -307,6 +307,36 @@ public class PulseGameMode
         }
     }
 
+    public static bool HasAnyGameWindow(uint processId)
+    {
+        try
+        {
+            bool found = false;
+            EnumWindows(delegate(IntPtr hWnd, IntPtr lParam)
+            {
+                uint owner;
+                GetWindowThreadProcessId(hWnd, out owner);
+                if (owner != processId) return true;
+                int exStyle = GetWindowLong(hWnd, -20);
+                if ((exStyle & 0x80) != 0) return true;
+                var title = new StringBuilder(256);
+                GetWindowText(hWnd, title, title.Capacity);
+                RECT rect;
+                if (!GetWindowRect(hWnd, out rect)) return true;
+                int width = rect.Right - rect.Left;
+                int height = rect.Bottom - rect.Top;
+                if (title.Length == 0 && (width < 320 || height < 240)) return true;
+                found = true;
+                return false;
+            }, IntPtr.Zero);
+            return found;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     private static IntPtr FindTopLevelWindow(string className, string title)
     {
         IntPtr result = IntPtr.Zero;
@@ -646,6 +676,7 @@ $script:candidatePid = 0
 $script:candidateSince = $null
 $script:libraryCandidatePid = 0
 $script:libraryCandidateSince = $null
+$script:gameWindowMissingSince = $null
 $script:suppressedPid = 0
 $script:suppressedName = ''
 
@@ -800,6 +831,7 @@ function Start-Session($game) {
   $script:game = $game
   $script:memoryFreedBytes = [long]0
   $script:sessionId = [guid]::NewGuid().ToString('N')
+  $script:gameWindowMissingSince = $null
 
   $session = [ordered]@{
     id = $script:sessionId
@@ -1036,6 +1068,7 @@ function Stop-Session([string]$reason) {
   $script:session = $null
   $script:memoryFreedBytes = [long]0
   $script:sessionId = ''
+  $script:gameWindowMissingSince = $null
   Write-Status
 }
 
@@ -1083,6 +1116,14 @@ try {
       $gameProcess = Get-Process -Id ([int]$script:session.game.pid) -ErrorAction SilentlyContinue
       if (-not $gameProcess) {
         Stop-Session 'the game process exited'
+      } elseif (-not [PulseGameMode]::HasAnyGameWindow([uint32]$gameProcess.Id)) {
+        if (-not $script:gameWindowMissingSince) {
+          $script:gameWindowMissingSince = $now
+        } elseif (($now - $script:gameWindowMissingSince).TotalSeconds -ge 6) {
+          Stop-Session 'the game window closed'
+        }
+      } else {
+        $script:gameWindowMissingSince = $null
       }
     }
 
