@@ -1,6 +1,6 @@
 {
   "name": "pulse-monitor",
-  "version": "2.0.16",
+  "version": "2.0.17",
   "description": "Pulse — a desktop Windows performance monitor with selectable CPU/GPU sensors",
   "main": "main.js",
   "author": "Jindao",

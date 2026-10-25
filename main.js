@@ -12,6 +12,7 @@ const {
   systemPreferences,
   dialog,
   shell,
+  Notification,
 } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs');
@@ -100,6 +101,21 @@ const updateState = {
   releaseNotes: '',
 };
 let updaterInitialized = false;
+let notifiedUpdateVersion = '';
+let startupUpdateTimer = null;
+
+function showUpdateNotification(version) {
+  if (!version || notifiedUpdateVersion === version) return;
+  if (!Notification.isSupported()) return;
+  notifiedUpdateVersion = version;
+  const notification = new Notification({
+    title: `Pulse 有新版本 v${version}`,
+    body: '点击打开设置，检查并安装更新。',
+    icon: path.join(__dirname, 'assets', 'icon.ico'),
+  });
+  notification.on('click', () => showSettingsWindow());
+  notification.show();
+}
 
 function getUpdateState() {
   return { ...updateState };
@@ -110,6 +126,7 @@ function publishUpdateState(patch) {
   if (settingsWindow && !settingsWindow.isDestroyed()) {
     settingsWindow.webContents.send('pulse:update', getUpdateState());
   }
+  if (tray) updateTrayMenu();
 }
 
 function initAutoUpdater() {
@@ -134,6 +151,9 @@ function initAutoUpdater() {
       message: `发现新版本 ${info.version}`,
       releaseNotes: notes,
     });
+    if (!settingsWindow || settingsWindow.isDestroyed() || !settingsWindow.isVisible()) {
+      showUpdateNotification(info.version);
+    }
   });
   autoUpdater.on('update-not-available', (info) => {
     publishUpdateState({
@@ -577,7 +597,10 @@ function updateTrayMenu() {
     },
     { label: '设置…', click: () => openSettings() },
     {
-      label: '检查更新…',
+      label:
+        updateState.status === 'available' && updateState.version
+          ? `发现新版本 v${updateState.version}…`
+          : '检查更新…',
       click: () => {
         openSettings();
         setTimeout(() => checkForUpdates(), 500);
@@ -1026,6 +1049,7 @@ function quitApp() {
   quitting = true;
   if (gameVisibilityTimer) clearInterval(gameVisibilityTimer);
   if (gameConfigSyncTimer) clearInterval(gameConfigSyncTimer);
+  if (startupUpdateTimer) clearTimeout(startupUpdateTimer);
   if (monitor) monitor.stop();
   if (saveTimer) {
     clearTimeout(saveTimer);
@@ -1199,6 +1223,9 @@ app.whenReady().then(async () => {
   createTray();
   gameVisibilityTimer = setInterval(syncGameVisibility, 1000);
   gameConfigSyncTimer = setInterval(syncGameConfigSnapshot, 10000);
+  startupUpdateTimer = setTimeout(() => {
+    if (!quitting && updateState.status === 'idle') checkForUpdates();
+  }, 8000);
 
   nativeTheme.on('updated', () => broadcastTheme());
   try {

@@ -55,6 +55,7 @@ const ui = {
   razerCount: $('peripheral-count'),
   razerList: $('peripheral-list'),
   interval: $('interval'),
+  updateBtn: $('update-btn'),
   settingsBtn: $('settings-btn'),
   menuBtn: $('menu-btn'),
   closeBtn: $('close-btn'),
@@ -475,6 +476,7 @@ function render(state) {
 
 function wireControls() {
   ui.settingsBtn.addEventListener('click', () => window.pulse.openSettings());
+  ui.updateBtn.addEventListener('click', () => window.pulse.openSettings());
   ui.menuBtn.addEventListener('click', () => window.pulse.showMenu());
   ui.closeBtn.addEventListener('click', () => window.pulse.hide());
 

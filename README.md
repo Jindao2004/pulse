@@ -90,7 +90,10 @@ Windows 桌面性能组件：固定在桌面上的紧凑方正监控卡片（基
 
 ## 在线更新
 
-- 设置页底部有 **软件更新** 卡片
+- 设置页顶部有 **软件更新** 卡片
+- 主界面底部也有 **检查更新** 按钮
+- 每次启动 Pulse 会自动检查更新；发现新版本会弹 Windows 通知
+- 打开设置也会自动检查
 - 点击 **检查更新** 会读取 GitHub Releases
 - 发现新版本后点击 **下载更新**，下载完成点击 **重启并安装**
 - 安装包会先卸载旧版本，再安装新版本；`%APPDATA%\Pulse` 中的设置和游戏列表会保留
@@ -131,7 +134,7 @@ CPU 温度依赖 **PawnIO** 驱动；本机已经安装。没有 PawnIO 时，�
 推荐使用安装版：
 
 ```text
-release/Pulse-Setup-2.0.16.exe
+release/Pulse-Setup-2.0.17.exe
 ```
 
 - 安装到当前用户目录，不需要管理员权限
@@ -152,13 +155,13 @@ Pulse 启动时会自动清理两小时前的旧 `3L*` Pulse 解压目录，但�
 安装版：
 
 ```text
-release/Pulse-Setup-2.0.16.exe
+release/Pulse-Setup-2.0.17.exe
 ```
 
 便携版：
 
 ```text
-release/Pulse-2.0.16.exe
+release/Pulse-2.0.17.exe
 ```
 
 首次运行 SmartScreen 可能提示“未知发布者”，选择“更多信息 → 仍要运行”。
@@ -195,4 +198,4 @@ npm start
 npm run pack
 ```
 
-产物默认在 `release/Pulse-Setup-2.0.16.exe`。`npm run pack:portable` 可额外生成便携版。打包时会把 `vendor/lhm-net48`、传感器脚本和游戏加速脚本放到应用资源目录，不需要 Visual Studio。
+产物默认在 `release/Pulse-Setup-2.0.17.exe`。`npm run pack:portable` 可额外生成便携版。打包时会把 `vendor/lhm-net48`、传感器脚本和游戏加速脚本放到应用资源目录，不需要 Visual Studio。
