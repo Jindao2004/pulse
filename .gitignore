@@ -2,7 +2,7 @@ node_modules/
 release/
 *.log
 pulse-installed-*.txt
-settings-update-*.png
+settings-*.png
 upload-source.js
 .DS_Store
 Thumbs.db

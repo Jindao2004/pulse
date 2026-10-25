@@ -1,6 +1,6 @@
 {
   "name": "pulse-monitor",
-  "version": "2.0.15",
+  "version": "2.0.16",
   "description": "Pulse — a desktop Windows performance monitor with selectable CPU/GPU sensors",
   "main": "main.js",
   "author": "Jindao",
@@ -84,10 +84,10 @@
     },
     "nsis": {
       "artifactName": "Pulse-Setup-${version}.${ext}",
-      "oneClick": false,
+      "oneClick": true,
       "perMachine": false,
       "allowElevation": false,
-      "allowToChangeInstallationDirectory": true,
+      "allowToChangeInstallationDirectory": false,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "Pulse",

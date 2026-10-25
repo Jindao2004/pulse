@@ -131,7 +131,7 @@ CPU 温度依赖 **PawnIO** 驱动；本机已经安装。没有 PawnIO 时，�
 推荐使用安装版：
 
 ```text
-release/Pulse-Setup-2.0.15.exe
+release/Pulse-Setup-2.0.16.exe
 ```
 
 - 安装到当前用户目录，不需要管理员权限
@@ -152,13 +152,13 @@ Pulse 启动时会自动清理两小时前的旧 `3L*` Pulse 解压目录，但�
 安装版：
 
 ```text
-release/Pulse-Setup-2.0.15.exe
+release/Pulse-Setup-2.0.16.exe
 ```
 
 便携版：
 
 ```text
-release/Pulse-2.0.15.exe
+release/Pulse-2.0.16.exe
 ```
 
 首次运行 SmartScreen 可能提示“未知发布者”，选择“更多信息 → 仍要运行”。
@@ -195,4 +195,4 @@ npm start
 npm run pack
 ```
 
-产物默认在 `release/Pulse-Setup-2.0.15.exe`。`npm run pack:portable` 可额外生成便携版。打包时会把 `vendor/lhm-net48`、传感器脚本和游戏加速脚本放到应用资源目录，不需要 Visual Studio。
+产物默认在 `release/Pulse-Setup-2.0.16.exe`。`npm run pack:portable` 可额外生成便携版。打包时会把 `vendor/lhm-net48`、传感器脚本和游戏加速脚本放到应用资源目录，不需要 Visual Studio。

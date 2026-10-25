@@ -202,7 +202,7 @@ async function downloadUpdate() {
 
 function installUpdate() {
   if (!app.isPackaged || updateState.status !== 'downloaded') return false;
-  setImmediate(() => autoUpdater.quitAndInstall(false, true));
+  setImmediate(() => autoUpdater.quitAndInstall(true, true));
   return true;
 }
 
