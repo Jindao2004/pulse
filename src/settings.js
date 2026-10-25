@@ -457,7 +457,7 @@ async function installGameMode() {
     renderGame();
     message.classList.toggle('error', !result.ok);
     message.textContent = result.ok
-      ? '游戏加速服务已启动，启动全屏游戏后会自动加速。'
+      ? '游戏加速服务已启动，启动游戏列表中的游戏后会自动加速。'
       : `启动失败：${result.error || '未知错误'}`;
   } catch (error) {
     message.classList.add('error');
@@ -494,8 +494,8 @@ function wireGame() {
   $('game-auto-detect').addEventListener('change', async (event) => {
     await saveGamePatch({ autoDetect: event.target.checked });
     $('game-message').textContent = event.target.checked
-      ? '已开启游戏列表识别。'
-      : '已关闭游戏列表识别，可用“立即加速”手动启动。';
+      ? '已开启游戏启动检测（仅限列表内的游戏）。'
+      : '已关闭游戏启动检测，可用“立即加速”手动启动。';
   });
   for (const input of document.querySelectorAll('[data-tweak]')) {
     input.addEventListener('change', async () => {

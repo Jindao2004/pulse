@@ -84,6 +84,8 @@ let hiddenForGame = false;
 let gameSessionActive = false;
 let gamePreVisible = true;
 let gameHiddenByUser = false;
+let gameToastWindow = null;
+let gameToastTimer = null;
 let gameVisibilityTimer = null;
 let gameConfigSyncTimer = null;
 let lastGameSnapshot = '';
@@ -107,17 +109,94 @@ let updaterInitialized = false;
 let notifiedUpdateVersion = '';
 let startupUpdateTimer = null;
 
-function showGameNotification(title, body) {
-  if (!Notification.isSupported()) return;
-  try {
-    new Notification({
-      title,
-      body,
-      icon: path.join(__dirname, 'assets', 'icon.ico'),
-    }).show();
-  } catch {
-    // Game switching must not depend on Windows notification availability.
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function closeGameToast() {
+  if (gameToastTimer) {
+    clearTimeout(gameToastTimer);
+    gameToastTimer = null;
   }
+  if (gameToastWindow && !gameToastWindow.isDestroyed()) {
+    gameToastWindow.close();
+  }
+  gameToastWindow = null;
+}
+
+function showGameNotification(title, body) {
+  closeGameToast();
+  const width = 360;
+  const height = 86;
+  const display = screen.getDisplayNearestPoint(screen.getCursorScreenPoint());
+  const area = display.workArea;
+  const html = `<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8" />
+<style>
+  html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: transparent; }
+  body { font-family: "Microsoft YaHei UI", "Segoe UI", sans-serif; user-select: none; }
+  .toast {
+    display: flex; align-items: center; gap: 12px; height: 100%; box-sizing: border-box;
+    padding: 12px 16px; color: #eefdf9;
+    background: rgba(10, 23, 26, 0.97);
+    border: 1px solid rgba(104, 231, 181, 0.32);
+    border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.38);
+  }
+  .mark {
+    width: 30px; height: 30px; flex: none; border-radius: 9px;
+    display: grid; place-items: center;
+    color: #08231a; font-weight: 700; font-size: 15px;
+    background: linear-gradient(145deg, #8cf3c3, #47c98b);
+  }
+  .copy { min-width: 0; }
+  .title { font-size: 12.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .body { margin-top: 4px; color: rgba(224, 248, 242, 0.72); font-size: 11px; line-height: 1.45; }
+</style></head>
+<body><div class="toast">
+  <div class="mark">P</div>
+  <div class="copy"><div class="title">${escapeHtml(title)}</div><div class="body">${escapeHtml(body)}</div></div>
+</div></body></html>`;
+  gameToastWindow = new BrowserWindow({
+    width,
+    height,
+    x: area.x + area.width - width - 18,
+    y: area.y + area.height - height - 18,
+    frame: false,
+    transparent: true,
+    resizable: false,
+    movable: false,
+    minimizable: false,
+    maximizable: false,
+    fullscreenable: false,
+    skipTaskbar: true,
+    hasShadow: false,
+    roundedCorners: false,
+    alwaysOnTop: true,
+    focusable: false,
+    show: false,
+    webPreferences: {
+      sandbox: true,
+      contextIsolation: true,
+      nodeIntegration: false,
+      backgroundThrottling: false,
+    },
+  });
+  gameToastWindow.setIgnoreMouseEvents(true);
+  gameToastWindow.setAlwaysOnTop(true, 'screen-saver');
+  gameToastWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+  gameToastWindow.once('ready-to-show', () => {
+    if (!gameToastWindow || gameToastWindow.isDestroyed()) return;
+    gameToastWindow.showInactive();
+  });
+  gameToastWindow.on('closed', () => {
+    gameToastWindow = null;
+  });
+  gameToastTimer = setTimeout(() => closeGameToast(), 5200);
 }
 
 function formatMemory(bytes) {
@@ -1061,10 +1140,10 @@ function syncGameVisibility() {
         hideWindow({ quiet: true });
       }
       const gameName = status.game?.name ? `「${status.game.name}」` : '';
-      const memory = formatMemory(status.memoryFreedBytes);
+      const memory = formatMemory(status.memoryFreedBytes) || '0 MB';
       showGameNotification(
         `Pulse 已启动游戏加速${gameName}`,
-        memory ? `本次清理了 ${memory} 内存，游戏结束后会自动恢复。` : '游戏结束后会自动恢复系统设置。',
+        `本次清理了 ${memory} 内存，游戏结束后会自动恢复。`,
       );
     }
     return;
@@ -1077,17 +1156,18 @@ function syncGameVisibility() {
       if (gamePreVisible && !gameHiddenByUser) showWindow();
     }
     const last = status.lastSession || {};
-    const memory = formatMemory(last.memoryFreedBytes);
+    const memory = formatMemory(last.memoryFreedBytes) || '0 MB';
     const gameName = last.game?.name ? `「${last.game.name}」` : '';
     showGameNotification(
       `Pulse 已结束游戏加速${gameName}`,
-      memory ? `系统设置已恢复，本次清理的内存为 ${memory}。` : '系统设置已恢复。',
+      `系统设置已恢复，本次清理的内存为 ${memory}。`,
     );
   }
 }
 
 function quitApp() {
   quitting = true;
+  closeGameToast();
   if (gameVisibilityTimer) clearInterval(gameVisibilityTimer);
   if (gameConfigSyncTimer) clearInterval(gameConfigSyncTimer);
   if (startupUpdateTimer) clearTimeout(startupUpdateTimer);
