@@ -724,6 +724,15 @@ async function handleUpdateAction() {
 wire();
 window.pulse.onTheme((theme) => window.PulseTheme?.apply(theme));
 window.pulse.onUpdate(renderUpdate);
-window.pulse.getUpdateState().then(renderUpdate).catch(() => {});
+window.pulse
+  .getUpdateState()
+  .then((next) => {
+    renderUpdate(next);
+    if (next?.status === 'idle') {
+      return window.pulse.checkForUpdates().then(renderUpdate);
+    }
+    return null;
+  })
+  .catch(() => {});
 load();
 setInterval(refreshDynamic, 2000);

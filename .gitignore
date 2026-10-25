@@ -1,5 +1,8 @@
 node_modules/
 release/
 *.log
+pulse-installed-*.txt
+settings-update-*.png
+upload-source.js
 .DS_Store
 Thumbs.db

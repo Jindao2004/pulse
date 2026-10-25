@@ -24,6 +24,20 @@
     </header>
 
     <main class="content">
+      <section class="card update-card">
+        <div class="card-head">
+          <div>
+            <h2>软件更新</h2>
+            <p class="hint" id="update-status">正在读取版本…</p>
+          </div>
+          <button class="btn small" id="update-action" type="button">检查更新</button>
+        </div>
+        <div class="update-progress" id="update-progress" hidden>
+          <div class="update-progress-track"><span id="update-progress-fill"></span></div>
+        </div>
+        <p class="hint" id="update-hint">从 GitHub Releases 检查新版本，下载完成后可重启安装。</p>
+      </section>
+
       <section class="card sensor-card">
         <div class="card-head">
           <div>
@@ -243,20 +257,6 @@
             </label>
           </div>
         </div>
-      </section>
-
-      <section class="card update-card">
-        <div class="card-head">
-          <div>
-            <h2>软件更新</h2>
-            <p class="hint" id="update-status">正在读取版本…</p>
-          </div>
-          <button class="btn small" id="update-action" type="button">检查更新</button>
-        </div>
-        <div class="update-progress" id="update-progress" hidden>
-          <div class="update-progress-track"><span id="update-progress-fill"></span></div>
-        </div>
-        <p class="hint" id="update-hint">从 GitHub Releases 检查新版本，下载完成后可重启安装。</p>
       </section>
     </main>
 
