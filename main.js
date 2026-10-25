@@ -84,6 +84,7 @@ let hiddenForGame = false;
 let gameSessionActive = false;
 let gamePreVisible = true;
 let gameHiddenByUser = false;
+let lastGameCandidatePid = 0;
 let gameToastWindow = null;
 let gameToastTimer = null;
 let gameVisibilityTimer = null;
@@ -1128,8 +1129,19 @@ function syncGameVisibility() {
   if (!gameMode || !mainWindow || mainWindow.isDestroyed()) return;
   const status = gameMode.getStatus();
   const active = Boolean(status.active) && !status.stale;
+  const candidate = !active && status.candidate;
+
+  if (candidate && candidate.pid && candidate.pid !== lastGameCandidatePid) {
+    lastGameCandidatePid = candidate.pid;
+    showGameNotification(
+      `Pulse 正在启动游戏加速${candidate.name ? `「${candidate.name}」` : ''}`,
+      '检测到游戏进程，正在等待游戏窗口…',
+    );
+  }
+  if (!candidate && !active) lastGameCandidatePid = 0;
 
   if (active) {
+    lastGameCandidatePid = 0;
     if (mainWindow.isAlwaysOnTop()) mainWindow.setAlwaysOnTop(false);
     if (!gameSessionActive) {
       gameSessionActive = true;
@@ -1342,7 +1354,7 @@ app.whenReady().then(async () => {
   registerIpc();
   createWindow();
   createTray();
-  gameVisibilityTimer = setInterval(syncGameVisibility, 1000);
+  gameVisibilityTimer = setInterval(syncGameVisibility, 250);
   gameConfigSyncTimer = setInterval(syncGameConfigSnapshot, 10000);
   startupUpdateTimer = setTimeout(() => {
     if (!quitting && updateState.status === 'idle') checkForUpdates();

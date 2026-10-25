@@ -634,6 +634,44 @@ function Find-LibraryGame {
   return $null
 }
 
+function Find-GameRecordForProcess([int]$processId, [string]$processPath, [string]$processName) {
+  $name = ''
+  if ($processPath) {
+    try { $name = [System.IO.Path]::GetFileNameWithoutExtension($processPath) } catch {}
+  }
+  if (-not $name) { $name = ([string]$processName) -replace '\.exe$', '' }
+  if (-not $name) { return $null }
+
+  foreach ($game in @(Get-Games)) {
+    try {
+      $gameName = [string]$game.processName
+      if (-not $gameName -and $game.path) {
+        $gameName = [System.IO.Path]::GetFileNameWithoutExtension([string]$game.path)
+      }
+      $sameName = $gameName -and ($gameName -ieq $name)
+      $samePath = $false
+      if ($game.path -and $processPath) {
+        try {
+          $samePath = [System.IO.Path]::GetFullPath([string]$game.path) -ieq [System.IO.Path]::GetFullPath($processPath)
+        } catch {}
+      }
+      if (-not $sameName -and -not $samePath) { continue }
+      return [pscustomobject]@{
+        pid = $processId
+        name = [string]$game.name
+        title = ''
+        path = $processPath
+        processName = $name
+        steamAppId = if ([int]$game.steamAppId -gt 0) { [int]$game.steamAppId } else { $null }
+        launcher = [string]$game.launcher
+        source = if ($game.source -eq 'manual') { 'manual' } elseif ($game.source -eq 'steam') { 'steam' } else { 'auto' }
+        startedAt = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
+      }
+    } catch {}
+  }
+  return $null
+}
+
 function Get-GameConfig {
   $saved = Read-Json $configPath
   $tweaks = @{
@@ -669,6 +707,8 @@ $script:session = $null
 $script:sessionId = ''
 $script:memoryFreedBytes = [long]0
 $script:lastSession = $null
+$script:candidate = $null
+$script:processWatcherActive = $false
 $script:admin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
   [Security.Principal.WindowsBuiltInRole]::Administrator
 )
@@ -750,6 +790,7 @@ function Write-Status {
     sessionId = $script:sessionId
     memoryFreedBytes = [long]$script:memoryFreedBytes
     lastSession = $script:lastSession
+    candidate = $script:candidate
     autoDetect = [bool]$config.autoDetect
     enabled = [bool]$config.enabled
     applied = @($script:applied)
@@ -832,6 +873,7 @@ function Start-Session($game) {
   $script:memoryFreedBytes = [long]0
   $script:sessionId = [guid]::NewGuid().ToString('N')
   $script:gameWindowMissingSince = $null
+  $script:candidate = $null
 
   $session = [ordered]@{
     id = $script:sessionId
@@ -1069,6 +1111,7 @@ function Stop-Session([string]$reason) {
   $script:memoryFreedBytes = [long]0
   $script:sessionId = ''
   $script:gameWindowMissingSince = $null
+  $script:candidate = $null
   Write-Status
 }
 
@@ -1101,9 +1144,42 @@ try {
       }
     } catch {}
   }
+
+  try {
+    Register-WmiEvent -Class Win32_ProcessStartTrace -SourceIdentifier 'PulseProcessStartTrace' -ErrorAction Stop | Out-Null
+    $script:processWatcherActive = $true
+    Write-Log 'Process start watcher active'
+  } catch {
+    $script:processWatcherActive = $false
+    Write-Log "Process start watcher unavailable: $($_.Exception.Message)"
+  }
+
   Write-Status
 
   while ($true) {
+    if ($script:processWatcherActive) {
+      try {
+        $events = @(Wait-Event -SourceIdentifier 'PulseProcessStartTrace' -Timeout 0.2 -ErrorAction SilentlyContinue)
+        foreach ($eventItem in $events) {
+          try { Remove-Event -EventIdentifier $eventItem.EventIdentifier -ErrorAction SilentlyContinue } catch {}
+          try {
+            $newProcess = $eventItem.SourceEventArgs.NewEvent
+            $eventPid = [int]$newProcess.ProcessID
+            $eventPath = [string]$newProcess.NewProcessName
+            if (-not $eventPath) { $eventPath = [string]$newProcess.ProcessName }
+            $eventName = [System.IO.Path]::GetFileNameWithoutExtension($eventPath)
+            if ($eventPid -gt 0 -and -not $script:active) {
+              $record = Find-GameRecordForProcess $eventPid $eventPath $eventName
+              if ($record) {
+                $script:candidate = $record
+                Write-Status
+              }
+            }
+          } catch {}
+        }
+      } catch {}
+    }
+
     $config = Get-GameConfig
     $now = Get-Date
 
@@ -1161,6 +1237,14 @@ try {
       }
     }
 
+    if ($script:candidate) {
+      $candidateProcess = Get-Process -Id ([int]$script:candidate.pid) -ErrorAction SilentlyContinue
+      $candidateAge = ([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() - [long]$script:candidate.startedAt)
+      if (-not $candidateProcess -or $candidateAge -gt 15000 -or -not $config.enabled -or -not $config.autoDetect) {
+        $script:candidate = $null
+      }
+    }
+
     if ($config.enabled -and $config.autoDetect -and -not $script:active) {
       $script:candidatePid = 0
       $script:candidateSince = $null
@@ -1182,7 +1266,7 @@ try {
           $script:libraryCandidateSince = $now
         } elseif (
           $script:libraryCandidateSince -and
-          ($now - $script:libraryCandidateSince).TotalSeconds -ge 2
+          ($now - $script:libraryCandidateSince).TotalSeconds -ge 0.5
         ) {
           Start-Session $libraryGame
           $script:libraryCandidatePid = 0
@@ -1200,7 +1284,7 @@ try {
 
     try { [PulseGameMode]::ManagePulseZOrder() } catch { }
     Write-Status
-    Start-Sleep -Milliseconds 1000
+    Start-Sleep -Milliseconds $(if ($script:processWatcherActive) { 50 } else { 250 })
   }
 } catch {
   $message = $_.Exception.ToString()
