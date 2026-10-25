@@ -809,16 +809,13 @@ function createWindow() {
 function showSettingsWindow() {
   if (!settingsWindow || settingsWindow.isDestroyed()) return;
   if (settingsWindow.isMinimized()) settingsWindow.restore();
-  settingsWindow.setAlwaysOnTop(true, 'screen-saver');
   settingsWindow.show();
-  settingsWindow.moveTop();
   settingsWindow.focus();
   setTimeout(() => {
     if (!settingsWindow || settingsWindow.isDestroyed()) return;
     if (settingsWindow.isMinimized()) {
       settingsWindow.restore();
       settingsWindow.show();
-      settingsWindow.moveTop();
       settingsWindow.focus();
     }
   }, 300);
@@ -837,7 +834,6 @@ function createSettingsWindow() {
     minHeight: 680,
     show: false,
     center: true,
-    alwaysOnTop: true,
     title: 'Pulse 设置',
     backgroundColor: '#0b1518',
     autoHideMenuBar: true,
