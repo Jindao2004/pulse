@@ -81,6 +81,9 @@ let tray = null;
 let monitor = null;
 let gameMode = null;
 let hiddenForGame = false;
+let gameSessionActive = false;
+let gamePreVisible = true;
+let gameHiddenByUser = false;
 let gameVisibilityTimer = null;
 let gameConfigSyncTimer = null;
 let lastGameSnapshot = '';
@@ -103,6 +106,26 @@ const updateState = {
 let updaterInitialized = false;
 let notifiedUpdateVersion = '';
 let startupUpdateTimer = null;
+
+function showGameNotification(title, body) {
+  if (!Notification.isSupported()) return;
+  try {
+    new Notification({
+      title,
+      body,
+      icon: path.join(__dirname, 'assets', 'icon.ico'),
+    }).show();
+  } catch {
+    // Game switching must not depend on Windows notification availability.
+  }
+}
+
+function formatMemory(bytes) {
+  const value = Number(bytes) || 0;
+  if (value <= 0) return '';
+  if (value >= 1024 * 1024 * 1024) return `${(value / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+  return `${Math.max(1, Math.round(value / (1024 * 1024)))} MB`;
+}
 
 function showUpdateNotification(version) {
   if (!version || notifiedUpdateVersion === version) return;
@@ -1004,6 +1027,7 @@ function showWindow() {
 
 function hideWindow(options = {}) {
   if (!mainWindow || !mainWindow.isVisible()) return;
+  if (gameSessionActive && !options.quiet) gameHiddenByUser = true;
   mainWindow.hide();
   updateTrayMenu();
 
@@ -1028,16 +1052,37 @@ function syncGameVisibility() {
 
   if (active) {
     if (mainWindow.isAlwaysOnTop()) mainWindow.setAlwaysOnTop(false);
-    if (mainWindow.isVisible()) {
-      hiddenForGame = true;
-      hideWindow({ quiet: true });
+    if (!gameSessionActive) {
+      gameSessionActive = true;
+      gamePreVisible = mainWindow.isVisible();
+      gameHiddenByUser = false;
+      if (mainWindow.isVisible()) {
+        hiddenForGame = true;
+        hideWindow({ quiet: true });
+      }
+      const gameName = status.game?.name ? `「${status.game.name}」` : '';
+      const memory = formatMemory(status.memoryFreedBytes);
+      showGameNotification(
+        `Pulse 已启动游戏加速${gameName}`,
+        memory ? `本次清理了 ${memory} 内存，游戏结束后会自动恢复。` : '游戏结束后会自动恢复系统设置。',
+      );
     }
     return;
   }
 
-  if (hiddenForGame) {
-    hiddenForGame = false;
-    showWindow();
+  if (gameSessionActive) {
+    gameSessionActive = false;
+    if (hiddenForGame) {
+      hiddenForGame = false;
+      if (gamePreVisible && !gameHiddenByUser) showWindow();
+    }
+    const last = status.lastSession || {};
+    const memory = formatMemory(last.memoryFreedBytes);
+    const gameName = last.game?.name ? `「${last.game.name}」` : '';
+    showGameNotification(
+      `Pulse 已结束游戏加速${gameName}`,
+      memory ? `系统设置已恢复，本次清理的内存为 ${memory}。` : '系统设置已恢复。',
+    );
   }
 }
 

@@ -276,6 +276,37 @@ public class PulseGameMode
         }
     }
 
+    public static bool HasVisibleGameWindow(uint processId)
+    {
+        try
+        {
+            bool found = false;
+            EnumWindows(delegate(IntPtr hWnd, IntPtr lParam)
+            {
+                uint owner;
+                GetWindowThreadProcessId(hWnd, out owner);
+                if (owner != processId) return true;
+                if (!IsWindowVisible(hWnd) || IsIconic(hWnd)) return true;
+                int exStyle = GetWindowLong(hWnd, -20);
+                if ((exStyle & 0x80) != 0) return true;
+                var title = new StringBuilder(256);
+                GetWindowText(hWnd, title, title.Capacity);
+                RECT rect;
+                if (!GetWindowRect(hWnd, out rect)) return true;
+                int width = rect.Right - rect.Left;
+                int height = rect.Bottom - rect.Top;
+                if (title.Length == 0 && (width < 320 || height < 240)) return true;
+                found = true;
+                return false;
+            }, IntPtr.Zero);
+            return found;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     private static IntPtr FindTopLevelWindow(string className, string title)
     {
         IntPtr result = IntPtr.Zero;
@@ -504,6 +535,8 @@ function Register-Game($game) {
       $record.name = [string]$game.name
       if ($gamePath) { $record.path = $gamePath }
       if ($game.processName) { $record.processName = [string]$game.processName }
+      if ([int]$game.steamAppId -gt 0) { $record.steamAppId = [int]$game.steamAppId }
+      if ($game.launcher) { $record.launcher = [string]$game.launcher }
       if ($record.source -ne 'manual' -and $record.source -ne 'steam') {
         $record.source = if ($game.source) { [string]$game.source } else { 'auto' }
       }
@@ -515,6 +548,8 @@ function Register-Game($game) {
         name = [string]$game.name
         path = $gamePath
         processName = [string]$game.processName
+        steamAppId = if ([int]$game.steamAppId -gt 0) { [int]$game.steamAppId } else { $null }
+        launcher = [string]$game.launcher
         source = if ($game.source) { [string]$game.source } else { 'auto' }
         addedAt = $now
         lastPlayed = $now
@@ -537,18 +572,30 @@ function Find-LibraryGame {
       }
       if (-not $processName) { continue }
       if ($blockedIds -contains $processName.ToLowerInvariant()) { continue }
+
+      $gamePath = ''
+      try { $gamePath = [System.IO.Path]::GetFullPath([string]$game.path) } catch {}
       $processes = @(Get-Process -Name $processName -ErrorAction SilentlyContinue)
       foreach ($process in $processes) {
         if ($process.Id -eq $PID) { continue }
+        # A process that is still only a background worker/updater is not a
+        # game session yet. Require a real, visible top-level game window.
+        if (-not [PulseGameMode]::HasVisibleGameWindow([uint32]$process.Id)) { continue }
         $processPath = ''
-        try { $processPath = [string]$process.Path } catch {}
+        try { $processPath = [System.IO.Path]::GetFullPath([string]$process.Path) } catch {}
+        if ($gamePath -and $processPath -and ($processPath -ne $gamePath)) {
+          # Same executable name from another installation should not match.
+          continue
+        }
         return [pscustomobject]@{
           pid = $process.Id
           name = [string]$game.name
           title = [string]$process.MainWindowTitle
           path = $processPath
           processName = $process.ProcessName
-          source = if ($game.source -eq 'manual') { 'manual' } else { 'auto' }
+          steamAppId = if ([int]$game.steamAppId -gt 0) { [int]$game.steamAppId } else { $null }
+          launcher = [string]$game.launcher
+          source = if ($game.source -eq 'manual') { 'manual' } elseif ($game.source -eq 'steam') { 'steam' } else { 'auto' }
         }
       }
     } catch {}
@@ -588,6 +635,9 @@ $script:game = $null
 $script:applied = @()
 $script:errors = @()
 $script:session = $null
+$script:sessionId = ''
+$script:memoryFreedBytes = [long]0
+$script:lastSession = $null
 $script:admin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
   [Security.Principal.WindowsBuiltInRole]::Administrator
 )
@@ -665,6 +715,9 @@ function Write-Status {
     ts = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
     active = $script:active
     game = $script:game
+    sessionId = $script:sessionId
+    memoryFreedBytes = [long]$script:memoryFreedBytes
+    lastSession = $script:lastSession
     autoDetect = [bool]$config.autoDetect
     enabled = [bool]$config.enabled
     applied = @($script:applied)
@@ -744,14 +797,18 @@ function Start-Session($game) {
   $script:applied = @()
   $script:errors = @()
   $script:game = $game
+  $script:memoryFreedBytes = [long]0
+  $script:sessionId = [guid]::NewGuid().ToString('N')
 
   $session = [ordered]@{
+    id = $script:sessionId
     game = $game
     startedAt = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
     powerPlan = $null
     stickyKeys = $null
     services = @()
     suspended = @()
+    memoryFreedBytes = [long]0
     preventSleep = $false
   }
 
@@ -848,12 +905,24 @@ function Start-Session($game) {
 
   if ($tweaks.trimMemory -and $session.suspended.Count -gt 0) {
     try {
+      $beforeBytes = [long]0
+      $afterBytes = [long]0
       foreach ($item in $session.suspended) {
         try {
           $process = Get-Process -Id $item.id -ErrorAction Stop
+          $beforeBytes += [long]$process.WorkingSet64
           [PulseGameMode]::EmptyWorkingSet($process.Handle) | Out-Null
         } catch {}
       }
+      Start-Sleep -Milliseconds 120
+      foreach ($item in $session.suspended) {
+        try {
+          $process = Get-Process -Id $item.id -ErrorAction Stop
+          $afterBytes += [long]$process.WorkingSet64
+        } catch {}
+      }
+      $session.memoryFreedBytes = [long][math]::Max(0, $beforeBytes - $afterBytes)
+      $script:memoryFreedBytes = [long]$session.memoryFreedBytes
       $script:applied += 'trimMemory'
     } catch {
       $script:errors += "trimMemory: $($_.Exception.Message)"
@@ -952,11 +1021,20 @@ function Stop-Session([string]$reason) {
     $script:suppressedName = [string]$session.game.name
   }
 
+  $script:lastSession = [ordered]@{
+    id = if ($session) { [string]$session.id } else { '' }
+    game = if ($session) { $session.game } else { $null }
+    memoryFreedBytes = if ($session) { [long]$session.memoryFreedBytes } else { [long]0 }
+    endedAt = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
+    reason = $reason
+  }
   $script:active = $false
   $script:game = $null
   $script:applied = @()
   $script:errors = @()
   $script:session = $null
+  $script:memoryFreedBytes = [long]0
+  $script:sessionId = ''
   Write-Status
 }
 
