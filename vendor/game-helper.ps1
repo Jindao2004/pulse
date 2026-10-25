@@ -500,7 +500,8 @@ function Write-Json([string]$path, $value) {
 function Read-Json([string]$path) {
   try {
     if (-not (Test-Path -LiteralPath $path)) { return $null }
-    return Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
+    $raw = [System.IO.File]::ReadAllText($path, (New-Object System.Text.UTF8Encoding($false)))
+    return $raw | ConvertFrom-Json
   } catch {
     return $null
   }

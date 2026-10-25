@@ -39,6 +39,7 @@ Windows 桌面性能组件：固定在桌面上的紧凑方正监控卡片（基
 - 游戏列表通过 **导入 Steam** 或 **添加游戏** 加入；自动记录标记为“自动识别”，手动添加标记为“手动添加”，Steam 导入标记为“Steam 导入”
 - 只有游戏列表中的进程，并且已经出现可见游戏窗口，才会触发加速；全屏视频、浏览器、播放器不会再把桌面监控关掉
 - 支持窗口化游戏；游戏进程启动但还没有窗口、或者只是后台更新器时不会触发
+- 游戏列表使用 UTF-8 读取，包含中文路径的手动游戏也能正常识别
 - 加速开始后会隐藏桌面监控卡片，游戏退出后自动恢复显示；不做游戏内监控或悬浮窗
 - 启动加速时会弹 Windows 通知，显示本次清理的 RAM；结束加速时也会提示系统已恢复，通知不会常驻
 - 默认勾选 9 项：禁用 CPU 睡眠、游戏电源方案、清除剪贴板、清理 RAM、粘滞键、禁用 Cortana、禁用后台应用、禁用远程数据采集、禁用问题报告
@@ -134,7 +135,7 @@ CPU 温度依赖 **PawnIO** 驱动；本机已经安装。没有 PawnIO 时，�
 推荐使用安装版：
 
 ```text
-release/Pulse-Setup-2.0.19.exe
+release/Pulse-Setup-2.0.20.exe
 ```
 
 - 安装到当前用户目录，不需要管理员权限
@@ -155,13 +156,13 @@ Pulse 启动时会自动清理两小时前的旧 `3L*` Pulse 解压目录，但�
 安装版：
 
 ```text
-release/Pulse-Setup-2.0.19.exe
+release/Pulse-Setup-2.0.20.exe
 ```
 
 便携版：
 
 ```text
-release/Pulse-2.0.19.exe
+release/Pulse-2.0.20.exe
 ```
 
 首次运行 SmartScreen 可能提示“未知发布者”，选择“更多信息 → 仍要运行”。
@@ -198,4 +199,4 @@ npm start
 npm run pack
 ```
 
-产物默认在 `release/Pulse-Setup-2.0.19.exe`。`npm run pack:portable` 可额外生成便携版。打包时会把 `vendor/lhm-net48`、传感器脚本和游戏加速脚本放到应用资源目录，不需要 Visual Studio。
+产物默认在 `release/Pulse-Setup-2.0.20.exe`。`npm run pack:portable` 可额外生成便携版。打包时会把 `vendor/lhm-net48`、传感器脚本和游戏加速脚本放到应用资源目录，不需要 Visual Studio。
